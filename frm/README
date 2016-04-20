@@ -1,6 +1,6 @@
 MySQL .frm file reader
 
 TODO:
-  - key fields size
+  - fields size in keys
   - default values
   - enum, set types

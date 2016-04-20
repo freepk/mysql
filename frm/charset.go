@@ -1,5 +1,7 @@
 package frm
 
+//
+
 type charset struct {
 	id        int
 	name      string

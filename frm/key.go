@@ -54,8 +54,7 @@ func (k *key) write(w io.Writer, columns []column) {
 			blobFieldType:
 			cn := c.charsetNum()
 			if cn != binaryCharset {
-				cs := charsets[cn]
-				l = l / cs.maxLen
+				l = l / c.charsetA().maxLen
 			}
 			writeParened(w, l)
 		case geometryFieldType:

@@ -44,7 +44,25 @@ func (k *key) write(w io.Writer, columns []column) {
 			writeComma(w)
 		}
 		writeQuoted(w, c.name)
+		l := int(p.length)
+		switch c.fieldType {
+		case varCharFieldType,
+			stringFieldType,
+			tinyBlobFieldType,
+			mediumBlobFieldType,
+			longBlobFieldType,
+			blobFieldType:
+			cn := c.charsetNum()
+			if cn != binaryCharset {
+				cs := charsets[cn]
+				l = l / cs.maxLen
+			}
+			writeParened(w, l)
+		case geometryFieldType:
+			writeParened(w, l)
+		}
 	}
+
 	writeCloseParen(w)
 	switch k.algorithm {
 	case bTreeKeyAlgo:

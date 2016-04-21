@@ -30,7 +30,7 @@ const (
 	blobFieldType       = 252
 	varStringFieldType  = 253
 	stringFieldType     = 254
-	geomertyFieldType   = 255
+	geometryFieldType   = 255
 )
 
 const (

@@ -3,7 +3,6 @@ package frm
 import (
 	"encoding/binary"
 	"io"
-	"strconv"
 )
 
 type column struct {
@@ -37,48 +36,54 @@ func (c *column) charsetNum() int {
 	return (int(c.charsetLow) << 8) + int(c.charset)
 }
 
+func (c *column) charsetA() *charset {
+	return charsets[c.charsetNum()]
+}
+
+func (c *column) maxLen() int {
+	return c.charsetA().maxLen
+}
+
 func (c *column) writeSize(w io.Writer) {
-	writeOpenParen(w)
-	io.WriteString(w, strconv.Itoa(int(c.fieldLength)))
-	writeCloseParen(w)
+	writeParened(w, int(c.fieldLength))
 }
 
 func (c *column) writeSign(w io.Writer) {
 	if (int(c.flags) & signedFieldFlag) == 0 {
-		io.WriteString(w, " UNSIGNED")
+		writeString(w, " UNSIGNED")
 	}
 }
 
 func (c *column) writeCharset(w io.Writer) {
-	cs := charsets[c.charsetNum()]
-	io.WriteString(w, " CHARACTER SET ")
-	io.WriteString(w, cs.name)
-	io.WriteString(w, " COLLATE ")
-	io.WriteString(w, cs.collate)
+	cs := c.charsetA()
+	writeString(w, " CHARACTER SET ")
+	writeString(w, cs.name)
+	writeString(w, " COLLATE ")
+	writeString(w, cs.collate)
 }
 
 func (c *column) writeSized(w io.Writer, s string) {
-	io.WriteString(w, s)
+	writeString(w, s)
 	c.writeSize(w)
 }
 
 func (c *column) writeSigned(w io.Writer, s string) {
-	io.WriteString(w, s)
+	writeString(w, s)
 	c.writeSign(w)
 }
 
 func (c *column) writeSizedSigned(w io.Writer, s string) {
-	io.WriteString(w, s)
+	writeString(w, s)
 	c.writeSize(w)
 	c.writeSign(w)
 }
 
 func (c *column) writeBlob(w io.Writer, s string) {
-	io.WriteString(w, s)
+	writeString(w, s)
 	if c.charsetNum() == binaryCharset {
-		io.WriteString(w, "BLOB")
+		writeString(w, "BLOB")
 	} else {
-		io.WriteString(w, "TEXT")
+		writeString(w, "TEXT")
 		c.writeCharset(w)
 	}
 }
@@ -87,14 +92,12 @@ func (c *column) writeBinary(w io.Writer, s string) {
 	cn := c.charsetNum()
 	io.WriteString(w, s)
 	if cn == binaryCharset {
-		io.WriteString(w, "BINARY")
+		writeString(w, "BINARY")
 		c.writeSize(w)
 	} else {
-		cs := charsets[cn]
-		io.WriteString(w, "CHAR")
-		writeOpenParen(w)
-		io.WriteString(w, strconv.Itoa(int(c.fieldLength)/cs.maxLen))
-		writeCloseParen(w)
+		cs := c.charsetA()
+		writeString(w, "CHAR")
+		writeParened(w, int(c.fieldLength)/cs.maxLen)
 		c.writeCharset(w)
 	}
 }
@@ -104,31 +107,31 @@ func (c *column) write(w io.Writer) {
 	writeSpace(w)
 	switch c.fieldType {
 	case newDateFieldType:
-		io.WriteString(w, "DATE")
+		writeString(w, "DATE")
 	case dateTime2FieldType:
-		io.WriteString(w, "DATETIME")
+		writeString(w, "DATETIME")
 	case time2FieldType:
-		io.WriteString(w, "TIME")
+		writeString(w, "TIME")
 	case timeStamp2FieldType:
-		io.WriteString(w, "TIMESTAMP DEFAULT '2000-01-01'")
-	case geomertyFieldType:
+		writeString(w, "TIMESTAMP DEFAULT '2000-01-01'")
+	case geometryFieldType:
 		switch c.charsetNum() {
 		case geometryGeomType:
-			io.WriteString(w, "GEOMETRY")
+			writeString(w, "GEOMETRY")
 		case pointGeomType:
-			io.WriteString(w, "POINT")
+			writeString(w, "POINT")
 		case lineStringGeomType:
-			io.WriteString(w, "LINESTRING")
+			writeString(w, "LINESTRING")
 		case polygonGeomType:
-			io.WriteString(w, "POLYGON")
+			writeString(w, "POLYGON")
 		case multiPointGeomType:
-			io.WriteString(w, "MULTIPOINT")
+			writeString(w, "MULTIPOINT")
 		case multiLineStrintGeomType:
-			io.WriteString(w, "MULTILINESTRING")
+			writeString(w, "MULTILINESTRING")
 		case multiPolygonGeomType:
-			io.WriteString(w, "MULTIPOLYGON")
+			writeString(w, "MULTIPOLYGON")
 		case geometryCollectionGeomType:
-			io.WriteString(w, "GEOMETRYCOLLECTION")
+			writeString(w, "GEOMETRYCOLLECTION")
 		}
 	case doubleFieldType:
 		c.writeSigned(w, "DOUBLE")
@@ -159,25 +162,25 @@ func (c *column) write(w io.Writer) {
 	case stringFieldType:
 		c.writeBinary(w, emptyString)
 	case newDecimalFieldType:
-		io.WriteString(w, "DECIMAL")
+		writeString(w, "DECIMAL")
 		i := int(c.fieldLength) - (int(c.flags) & signedFieldFlag)
 		f := (int(c.flags) >> decimalShift) & decimalMask
 		if f > 0 {
 			i--
 		}
 		writeOpenParen(w)
-		io.WriteString(w, strconv.Itoa(i))
+		writeNumber(w, i)
 		writeComma(w)
-		io.WriteString(w, strconv.Itoa(f))
+		writeNumber(w, f)
 		writeCloseParen(w)
 		c.writeSign(w)
 	default:
-		io.WriteString(w, "<UNKNOWN_TYPE>")
+		writeString(w, "<UNKNOWN_TYPE>")
 	}
 	if (c.flags & nullableFieldFlag) == 0 {
-		io.WriteString(w, " NOT NULL")
+		writeString(w, " NOT NULL")
 	}
 	if c.uniregType == 15 {
-		io.WriteString(w, " AUTO_INCREMENT")
+		writeString(w, " AUTO_INCREMENT")
 	}
 }

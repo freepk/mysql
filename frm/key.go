@@ -25,12 +25,12 @@ func (k *key) read(d []byte) {
 
 func (k *key) write(w io.Writer, columns []column) {
 	if k.name == "PRIMARY" {
-		io.WriteString(w, "PRIMARY KEY")
+		writeString(w, "PRIMARY KEY")
 	} else {
 		if (k.flags & allowDupsKeyFlag) == 0 {
-			io.WriteString(w, "UNIQUE KEY")
+			writeString(w, "UNIQUE KEY")
 		} else {
-			io.WriteString(w, "KEY")
+			writeString(w, "KEY")
 		}
 		writeSpace(w)
 		writeQuoted(w, k.name)
@@ -65,12 +65,12 @@ func (k *key) write(w io.Writer, columns []column) {
 	writeCloseParen(w)
 	switch k.algorithm {
 	case bTreeKeyAlgo:
-		io.WriteString(w, " USING BTREE")
+		writeString(w, " USING BTREE")
 	case rTreeKeyAlgo:
-		io.WriteString(w, " USING RTREE")
+		writeString(w, " USING RTREE")
 	case hashKeyAlgo:
-		io.WriteString(w, " USING HASH")
+		writeString(w, " USING HASH")
 	case fullTextKeyAlgo:
-		io.WriteString(w, " USING FULLTEXT")
+		writeString(w, " USING FULLTEXT")
 	}
 }

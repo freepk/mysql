@@ -90,7 +90,7 @@ func (c *column) writeBlob(w io.Writer, s string) {
 
 func (c *column) writeBinary(w io.Writer, s string) {
 	cn := c.charsetNum()
-	io.WriteString(w, s)
+	writeString(w, s)
 	if cn == binaryCharset {
 		writeString(w, "BINARY")
 		c.writeSize(w)

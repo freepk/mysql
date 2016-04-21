@@ -51,7 +51,7 @@ func (c *column) writeSign(w io.Writer) {
 
 func (c *column) writeCharset(w io.Writer) {
 	cs := charsets[c.charsetNum()]
-	io.WriteString(w, " CHARSET ")
+	io.WriteString(w, " CHARACTER SET ")
 	io.WriteString(w, cs.name)
 	io.WriteString(w, " COLLATE ")
 	io.WriteString(w, cs.collate)

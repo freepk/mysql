@@ -110,7 +110,7 @@ func (c *column) write(w io.Writer) {
 	case time2FieldType:
 		io.WriteString(w, "TIME")
 	case timeStamp2FieldType:
-		io.WriteString(w, "TIMESTAMP")
+		io.WriteString(w, "TIMESTAMP DEFAULT '2000-01-01'")
 	case geomertyFieldType:
 		switch c.charsetNum() {
 		case geometryGeomType:

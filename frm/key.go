@@ -44,7 +44,7 @@ func (k *key) write(w io.Writer, columns []column) {
 			writeComma(w)
 		}
 		writeQuoted(w, c.name)
-		l := int(p.length)
+		z := int(p.length)
 		switch c.fieldType {
 		case varCharFieldType,
 			stringFieldType,
@@ -54,11 +54,11 @@ func (k *key) write(w io.Writer, columns []column) {
 			blobFieldType:
 			cn := c.charsetNum()
 			if cn != binaryCharset {
-				l = l / c.charsetA().maxLen
+				z = z / c.charsetA().maxLen
 			}
-			writeParened(w, l)
+			writeParened(w, z)
 		case geometryFieldType:
-			writeParened(w, l)
+			writeParened(w, z)
 		}
 	}
 

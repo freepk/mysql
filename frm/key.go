@@ -61,7 +61,6 @@ func (k *key) write(w io.Writer, columns []column) {
 			writeParened(w, z)
 		}
 	}
-
 	writeCloseParen(w)
 	switch k.algorithm {
 	case bTreeKeyAlgo:

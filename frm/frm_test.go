@@ -14,7 +14,7 @@ const (
 func TestNewFrm(t *testing.T) {
 	fi, err := ioutil.ReadDir(dataDir)
 	if err != nil {
-		t.Fail()
+		t.Fatal(err)
 	}
 	l := len(fi)
 	b := &bytes.Buffer{}
@@ -22,7 +22,7 @@ func TestNewFrm(t *testing.T) {
 		p := fmt.Sprint(dataDir, fi[i].Name())
 		t.Log(p)
 		if frm, err := NewFrm(p); err != nil {
-			t.Fail()
+			t.Fatal(err)
 		} else {
 			b.Reset()
 			frm.WriteCreateTable(b, "unknown")

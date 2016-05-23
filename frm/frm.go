@@ -3,6 +3,7 @@ package frm
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"io"
 	"io/ioutil"
 )

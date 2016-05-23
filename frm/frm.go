@@ -118,7 +118,7 @@ func (f *Frm) readColumns(data []byte) {
 			col := &f.columns[colNum]
 			colNum++
 			nameSize := data[2]
-			col.name = string(data[3:(3 + nameSize)])
+			col.name = string(data[3:(3 + nameSize - 1)])
 			data = data[(3 + nameSize):]
 		}
 	}
@@ -153,7 +153,7 @@ func (f *Frm) readKeys(data []byte) {
 	data = data[1:]
 	for i := 0; i < numKeys; i++ {
 		j := bytes.IndexByte(data, term)
-		f.keys[i].name = string(data[:j])
+		f.keys[i].name = string(data[:(j - 1)])
 		data = data[(j + 1):]
 	}
 }

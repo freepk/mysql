@@ -153,7 +153,7 @@ func (f *Frm) readKeys(data []byte) {
 	data = data[1:]
 	for i := 0; i < numKeys; i++ {
 		j := bytes.IndexByte(data, term)
-		f.keys[i].name = string(data[:(j - 1)])
+		f.keys[i].name = string(data[:j])
 		data = data[(j + 1):]
 	}
 }

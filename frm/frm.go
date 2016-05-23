@@ -8,6 +8,10 @@ import (
 	"io/ioutil"
 )
 
+var (
+	WrongFRMFileErr = errors.New("Wrong FRM file type.")
+)
+
 type Frm struct {
 	fileType          uint16
 	version           uint8
@@ -43,10 +47,13 @@ func NewFrm(path string) (*Frm, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(data) < 64 {
+		return nil, WrongFRMFileErr
+	}
 	frm := &Frm{}
 	frm.read(data)
 	if frm.fileType != tableFileType {
-		return nil, fmt.Errorf("Wrong FRM file type.")
+		return nil, WrongFRMFileErr
 	}
 	frm.readKeys(data)
 	frm.readColumns(data)
@@ -105,7 +112,6 @@ func (f *Frm) readColumns(data []byte) {
 	f.columns = make([]column, numColumns)
 	colNum := 0
 	for i := 0; i < numScreens; i++ {
-		//ss := int(binary.LittleEndian.Uint16(data[0:2]))
 		numNames := int(data[3])
 		data = data[48:]
 		for j := 0; j < numNames; j++ {
@@ -125,10 +131,10 @@ func (f *Frm) readColumns(data []byte) {
 func (f *Frm) readKeys(data []byte) {
 	data = data[f.keysPos():]
 	numKeys := int(data[0])
-	//numParts := int(data[1])
+	numParts := int(data[1])
 	if (numKeys & 0x80) > 0 {
-		numKeys = (int(data[1]) << 7) | (numKeys & 0x7f)
-		//numParts = int(data[2]) + (int(data[3]) << 8)
+		numKeys = (int(numParts) << 7) | (numKeys & 0x7f)
+		numParts = int(data[2]) + (int(data[3]) << 8)
 	}
 	data = data[6:]
 	f.keys = make([]key, numKeys)

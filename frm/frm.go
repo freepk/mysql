@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"os"
 )
 
 var (
@@ -43,17 +44,27 @@ type Frm struct {
 }
 
 func NewFrm(path string) (*Frm, error) {
-	data, err := ioutil.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	if len(data) < 64 {
+	defer file.Close()
+	header := &bytes.Buffer{}
+	num, err := io.CopyN(header, file, 64)
+	if err != nil {
+		return nil, err
+	}
+	if num != 64 {
 		return nil, WrongFRMFileErr
 	}
 	frm := &Frm{}
-	frm.read(data)
+	frm.read(header.Bytes())
 	if frm.fileType != tableFileType {
 		return nil, WrongFRMFileErr
+	}
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
 	}
 	frm.readKeys(data)
 	frm.readColumns(data)

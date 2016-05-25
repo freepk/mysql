@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	dataDir = "./data/"
+	dataDir = "data/"
 )
 
 func TestNewFrm(t *testing.T) {

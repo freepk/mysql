@@ -71,8 +71,8 @@ func (c *Cmd) Drop(name string) error {
 	if err != nil {
 		return err
 	}
-	for _, table := range tables {
-		_, err = c.db.Exec("DROP TABLE " + table)
+	if len(tables) > 0 {
+		_, err = c.db.Exec("DROP TABLE " + strings.Join(tables, ", "))
 		if err != nil {
 			return err
 		}

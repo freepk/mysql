@@ -130,7 +130,7 @@ func (c *Cmd) BackupDiff(name, snap0, snap1 string, w io.Writer) error {
 	return zfs.SendDiff(snap0, snap1, false, w)
 }
 
-func (c *Cmd) Restore(name string, r io.Writer) error {
+func (c *Cmd) Restore(name string, r io.Reader) error {
 	err := c.use(name)
 	if err != nil {
 		return err
@@ -145,5 +145,10 @@ func (c *Cmd) Restore(name string, r io.Writer) error {
 			return err
 		}
 	}
+	snap, err := zfs.Recv(c.fileSys+"/"+name, true, r)
+	if err != nil {
+		return err
+	}
+	_ = snap
 	return nil
 }

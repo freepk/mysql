@@ -145,10 +145,11 @@ func (c *Cmd) Restore(name string, r io.Reader) error {
 			return err
 		}
 	}
-	snap, err := zfs.Recv(c.fileSys+"/"+name, true, r)
-	if err != nil {
-		return err
-	}
-	_ = snap
+	//fileSys := c.fileSys + "/" + name
+	//snap, err := zfs.Recv(fileSys, true, r)
+	//if err != nil {
+	//	return err
+	//}
+	//_ = snap
 	return nil
 }

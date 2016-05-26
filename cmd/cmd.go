@@ -131,5 +131,19 @@ func (c *Cmd) BackupDiff(name, snap0, snap1 string, w io.Writer) error {
 }
 
 func (c *Cmd) Restore(name string, r io.Writer) error {
+	err := c.use(name)
+	if err != nil {
+		return err
+	}
+	tables, err := c.showTables()
+	if err != nil {
+		return err
+	}
+	if len(tables) > 0 {
+		_, err = c.db.Exec("DROP TABLE " + strings.Join(tables, ", "))
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

@@ -54,7 +54,7 @@ func TestSnapshot(t *testing.T) {
 	}
 }
 
-func TestBackup(t *testing.T) {
+func TestBackupRestore(t *testing.T) {
 	name := "boomoo"
 	snap0 := "first"
 	snap1 := "second"
@@ -80,6 +80,14 @@ func TestBackup(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = cmd.BackupDiff(name, snap0, snap1, back1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = cmd.Restore(name, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = cmd.Restore(name, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"bytes"
 	"database/sql"
+	"github.com/freepk/mysql/frm"
 	"github.com/freepk/zfs"
 	_ "github.com/go-sql-driver/mysql"
 	"io"
+	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -145,11 +149,46 @@ func (c *Cmd) Restore(name string, r io.Reader) error {
 			return err
 		}
 	}
-	//fileSys := c.fileSys + "/" + name
-	//snap, err := zfs.Recv(fileSys, true, r)
-	//if err != nil {
-	//	return err
-	//}
-	//_ = snap
+	fileSys := c.fileSys + "/" + name
+	snap, err := zfs.Recv(fileSys, true, r)
+	if err != nil {
+		return err
+	}
+	dataDir := c.dataDir + "/" + name
+	fileInfos, err := ioutil.ReadDir(dataDir)
+	if err != nil {
+		return err
+	}
+	ddl := new(bytes.Buffer)
+	tableMap := make(map[string]string)
+	for _, fileInfo := range fileInfos {
+		filePath := dataDir + "/" + fileInfo.Name()
+		if frm, err := frm.NewFrm(filePath); err == nil {
+			ddl.Reset()
+			table := strings.Split(fileInfo.Name(), ".")[0]
+			frm.WriteCreateTable(ddl, table)
+			tableMap[table] = ddl.String()
+		}
+		os.Remove(filePath)
+	}
+	for table, ddl := range tableMap {
+		_, err = c.db.Exec(ddl)
+		if err != nil {
+			return err
+		}
+		_, err = c.db.Exec("ALTER TABLE " + table + " DISCARD TABLESPACE")
+		if err != nil {
+			return err
+		}
+	}
+	if err = zfs.Rollback(snap, true); err != nil {
+		return err
+	}
+	for table, _ := range tableMap {
+		_, err = c.db.Exec("ALTER TABLE " + table + " IMPORT TABLESPACE")
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }

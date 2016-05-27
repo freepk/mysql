@@ -20,6 +20,7 @@ func init() {
 	cmd = c
 }
 
+/*
 func TestCreateDrop(t *testing.T) {
 	name := "boomoo"
 	err := cmd.Create(name)
@@ -83,11 +84,42 @@ func TestBackupRestore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = cmd.Restore(name, nil)
+	//err = cmd.Restore(name, nil)
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	//err = cmd.Restore(name, nil)
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	err = cmd.Drop(name)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = cmd.Restore(name, nil)
+}
+*/
+
+func TestCreateRestore(t *testing.T) {
+	name := "boomoo"
+	err := cmd.Create(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	full, err := os.Open("./full-dump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer full.Close()
+	err = cmd.Restore(name, full)
+	if err != nil {
+		t.Fatal(err)
+	}
+	diff, err := os.Open("./diff-dump")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer diff.Close()
+	err = cmd.Restore(name, diff)
 	if err != nil {
 		t.Fatal(err)
 	}

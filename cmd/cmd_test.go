@@ -20,7 +20,6 @@ func init() {
 	cmd = c
 }
 
-/*
 func TestCreateDrop(t *testing.T) {
 	name := "boomoo"
 	err := cmd.Create(name)
@@ -55,13 +54,13 @@ func TestSnapshot(t *testing.T) {
 	}
 }
 
-func TestBackupRestore(t *testing.T) {
+func TestBackup(t *testing.T) {
 	name := "boomoo"
 	snap0 := "first"
 	snap1 := "second"
-	back0, _ := os.Create("backup-full")
+	back0, _ := os.Create("test-dump-full")
 	defer back0.Close()
-	back1, _ := os.Create("backup-diff")
+	back1, _ := os.Create("test-dump-diff")
 	defer back1.Close()
 
 	err := cmd.Create(name)
@@ -84,22 +83,13 @@ func TestBackupRestore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	//err = cmd.Restore(name, nil)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
-	//err = cmd.Restore(name, nil)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
 	err = cmd.Drop(name)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
-*/
 
-func TestCreateRestore(t *testing.T) {
+func TestRestore(t *testing.T) {
 	name := "boomoo"
 	err := cmd.Create(name)
 	if err != nil {
@@ -122,6 +112,33 @@ func TestCreateRestore(t *testing.T) {
 	err = cmd.Restore(name, diff)
 	if err != nil {
 		t.Fatal(err)
+	}
+	err = cmd.Drop(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSnapList(t *testing.T) {
+	name := "boomoo"
+	snap0 := "first"
+	snap1 := "second"
+	err := cmd.Create(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = cmd.Snapshot(name, snap0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = cmd.Snapshot(name, snap1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if list, err := cmd.ListSnap(name); err != nil {
+		t.Fatal(err)
+	} else {
+		t.Log(list)
 	}
 	err = cmd.Drop(name)
 	if err != nil {

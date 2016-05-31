@@ -192,3 +192,7 @@ func (c *Cmd) Restore(name string, r io.Reader) error {
 	}
 	return nil
 }
+
+func (c *Cmd) ListSnap(name string) ([]string, error) {
+	return zfs.ListSnap(c.fileSys + "/" + name)
+}

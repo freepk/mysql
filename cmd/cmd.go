@@ -12,32 +12,16 @@ import (
 	"strings"
 )
 
-type Cmd struct {
-	dataDir string
-	fileSys string
-	dataSrc string
-	db      *sql.DB
-}
-
-func NewCmd(dataDir, fileSys, dataSrc string) (*Cmd, error) {
-	db, err := sql.Open("mysql", dataSrc)
-	if err != nil {
-		return nil, err
-	}
-	cmd := &Cmd{dataDir: dataDir, fileSys: fileSys, dataSrc: dataSrc, db: db}
-	return cmd, nil
-}
-
-func (c *Cmd) use(name string) error {
-	_, err := c.db.Exec("USE " + name)
+func selectDb(db *sql.DB, name string) error {
+	_, err := db.Exec("USE " + name)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Cmd) showTables() ([]string, error) {
-	rows, err := c.db.Query("SHOW TABLES")
+func showTables(db *sql.DB) ([]string, error) {
+	rows, err := db.Query("SHOW TABLES")
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +38,24 @@ func (c *Cmd) showTables() ([]string, error) {
 	return tables, nil
 }
 
+type Cmd struct {
+	fileSys string
+	dataDir string
+	dataSrc string
+}
+
+func NewCmd(fileSys, dataDir, dataSrc string) (*Cmd, error) {
+	cmd := &Cmd{dataDir: dataDir, fileSys: fileSys, dataSrc: dataSrc}
+	return cmd, nil
+}
+
 func (c *Cmd) Create(name string) error {
-	_, err := c.db.Exec("CREATE DATABASE " + name)
+	db, err := sql.Open("mysql", c.dataSrc)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	_, err = db.Exec("CREATE DATABASE " + name)
 	if err != nil {
 		return err
 	}
@@ -67,16 +67,21 @@ func (c *Cmd) Create(name string) error {
 }
 
 func (c *Cmd) Drop(name string) error {
-	err := c.use(name)
+	db, err := sql.Open("mysql", c.dataSrc)
 	if err != nil {
 		return err
 	}
-	tables, err := c.showTables()
+	defer db.Close()
+	err = selectDb(db, name)
+	if err != nil {
+		return err
+	}
+	tables, err := showTables(db)
 	if err != nil {
 		return err
 	}
 	if len(tables) > 0 {
-		_, err = c.db.Exec("DROP TABLE " + strings.Join(tables, ", "))
+		_, err = db.Exec("DROP TABLE " + strings.Join(tables, ", "))
 		if err != nil {
 			return err
 		}
@@ -86,7 +91,7 @@ func (c *Cmd) Drop(name string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.db.Exec("DROP DATABASE " + name)
+	_, err = db.Exec("DROP DATABASE " + name)
 	if err != nil {
 		return err
 	}
@@ -94,20 +99,25 @@ func (c *Cmd) Drop(name string) error {
 }
 
 func (c *Cmd) Snapshot(name, snap string) error {
-	err := c.use(name)
+	db, err := sql.Open("mysql", c.dataSrc)
 	if err != nil {
 		return err
 	}
-	_, err = c.db.Exec("FLUSH TABLES WITH READ LOCK")
+	defer db.Close()
+	err = selectDb(db, name)
 	if err != nil {
 		return err
 	}
-	tables, err := c.showTables()
+	_, err = db.Exec("FLUSH TABLES WITH READ LOCK")
+	if err != nil {
+		return err
+	}
+	tables, err := showTables(db)
 	if err != nil {
 		return err
 	}
 	if len(tables) > 0 {
-		_, err = c.db.Exec("FLUSH TABLES " + strings.Join(tables, ", ") + " FOR EXPORT")
+		_, err = db.Exec("FLUSH TABLES " + strings.Join(tables, ", ") + " FOR EXPORT")
 		if err != nil {
 			return err
 		}
@@ -116,7 +126,7 @@ func (c *Cmd) Snapshot(name, snap string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.db.Exec("UNLOCK TABLES")
+	_, err = db.Exec("UNLOCK TABLES")
 	if err != nil {
 		return err
 	}
@@ -135,16 +145,21 @@ func (c *Cmd) BackupDiff(name, snap0, snap1 string, w io.Writer) error {
 }
 
 func (c *Cmd) Restore(name string, r io.Reader) error {
-	err := c.use(name)
+	db, err := sql.Open("mysql", c.dataSrc)
 	if err != nil {
 		return err
 	}
-	tables, err := c.showTables()
+	defer db.Close()
+	err = selectDb(db, name)
+	if err != nil {
+		return err
+	}
+	tables, err := showTables(db)
 	if err != nil {
 		return err
 	}
 	if len(tables) > 0 {
-		_, err = c.db.Exec("DROP TABLE " + strings.Join(tables, ", "))
+		_, err = db.Exec("DROP TABLE " + strings.Join(tables, ", "))
 		if err != nil {
 			return err
 		}
@@ -172,11 +187,11 @@ func (c *Cmd) Restore(name string, r io.Reader) error {
 		os.Remove(filePath)
 	}
 	for table, ddl := range tableMap {
-		_, err = c.db.Exec(ddl)
+		_, err = db.Exec(ddl)
 		if err != nil {
 			return err
 		}
-		_, err = c.db.Exec("ALTER TABLE " + table + " DISCARD TABLESPACE")
+		_, err = db.Exec("ALTER TABLE " + table + " DISCARD TABLESPACE")
 		if err != nil {
 			return err
 		}
@@ -185,7 +200,7 @@ func (c *Cmd) Restore(name string, r io.Reader) error {
 		return err
 	}
 	for table, _ := range tableMap {
-		_, err = c.db.Exec("ALTER TABLE " + table + " IMPORT TABLESPACE")
+		_, err = db.Exec("ALTER TABLE " + table + " IMPORT TABLESPACE")
 		if err != nil {
 			return err
 		}

@@ -13,7 +13,7 @@ var (
 const ()
 
 func init() {
-	c, err := NewCmd("/var/db/mysql/tank/srv2", "tank/srv2", "root:qwer1234@tcp(localhost:33062)/")
+	c, err := NewCmd("tank/srv2", "/var/db/mysql/tank/srv2", "root:qwer1234@tcp(localhost:33062)/")
 	if err != nil {
 		log.Fatal(err)
 	}

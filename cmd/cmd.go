@@ -154,12 +154,12 @@ func (c *Cmd) Restore(name string, r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	tables, err := showTables(db)
+	oldTables, err := showTables(db)
 	if err != nil {
 		return err
 	}
-	if len(tables) > 0 {
-		_, err = db.Exec("DROP TABLE " + strings.Join(tables, ", "))
+	if len(oldTables) > 0 {
+		_, err = db.Exec("DROP TABLE " + strings.Join(oldTables, ", "))
 		if err != nil {
 			return err
 		}
@@ -170,23 +170,23 @@ func (c *Cmd) Restore(name string, r io.Reader) error {
 		return err
 	}
 	dataDir := c.dataDir + "/" + name
-	fileInfos, err := ioutil.ReadDir(dataDir)
+	files, err := ioutil.ReadDir(dataDir)
 	if err != nil {
 		return err
 	}
 	ddl := new(bytes.Buffer)
-	tableMap := make(map[string]string)
-	for _, fileInfo := range fileInfos {
-		filePath := dataDir + "/" + fileInfo.Name()
-		if frm, err := frm.NewFrm(filePath); err == nil {
+	newTables := make(map[string]string)
+	for _, file := range files {
+		path := dataDir + "/" + file.Name()
+		if frm, err := frm.NewFrm(path); err == nil {
 			ddl.Reset()
-			table := strings.Split(fileInfo.Name(), ".")[0]
+			table := strings.Split(file.Name(), ".")[0]
 			frm.WriteCreateTable(ddl, table)
-			tableMap[table] = ddl.String()
+			newTables[table] = ddl.String()
 		}
-		os.Remove(filePath)
+		os.Remove(path)
 	}
-	for table, ddl := range tableMap {
+	for table, ddl := range newTables {
 		_, err = db.Exec(ddl)
 		if err != nil {
 			return err
@@ -199,7 +199,7 @@ func (c *Cmd) Restore(name string, r io.Reader) error {
 	if err = zfs.Rollback(snap, true); err != nil {
 		return err
 	}
-	for table, _ := range tableMap {
+	for table, _ := range newTables {
 		_, err = db.Exec("ALTER TABLE " + table + " IMPORT TABLESPACE")
 		if err != nil {
 			return err

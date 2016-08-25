@@ -66,6 +66,32 @@ func (c *Cmd) Create(name string) error {
 	return nil
 }
 
+func (c *Cmd) GrantPrivileges(dbname string, username string) error {
+	db, err := sql.Open("mysql", c.dataSrc)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	_, err = db.Exec("GRANT ALL ON `" + dbname + "`.* TO `"+ username +"`@`%`")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Cmd) CreateUser(username string, passwd string) error {
+	db, err := sql.Open("mysql", c.dataSrc)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	_, err = db.Exec("CREATE USER IF NOT EXISTS '"+username+"'@'%' IDENTIFIED BY '"+passwd+"'")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *Cmd) Drop(name string) error {
 	db, err := sql.Open("mysql", c.dataSrc)
 	if err != nil {
